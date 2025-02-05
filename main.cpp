@@ -27,10 +27,10 @@ float x_cam = 0;
 float y_cam = 0;
 float z_cam = 0;
 
-float scaleVal = 1;
+float scaleVal = 2.5;
 
 float thetaX = 0;
-float thetaY = 0;
+float thetaY = 315;
 float thetaZ = 0;
 
 float axisX = 1;
@@ -90,8 +90,8 @@ int main(void)
     if (!glfwInit())
         return -1;
 
-    float windowWidth = 640;
-    float windowHeight = 640;
+    float windowWidth = 600;
+    float windowHeight = 600;
 
     /* Create a windowed mode window and its OpenGL context */
     window = glfwCreateWindow(windowWidth, windowHeight, "Marlou Vincent Ruiz", NULL, NULL);
@@ -238,7 +238,7 @@ int main(void)
     );
 
 
-    /* Loop until the user closes the window */
+    // Loop until the user closes the window
     while (!glfwWindowShouldClose(window))
     {
         ProcessInput();
@@ -251,7 +251,7 @@ int main(void)
         glm::mat4 cameraPosMatrix = glm::translate(glm::mat4(1.0f), cameraPos * -1.0f);
 
         //Orientation
-        glm::vec3 worldUp = glm::normalize(glm::vec3(0.0f, 1.0f , 0.0f )); //Pointing upwards
+        glm::vec3 worldUp = glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f)); //Pointing upwards
         glm::vec3 cameraCenter = glm::vec3(0.0f + x_cam, 0.0f + y_cam, 0 + z_cam);
 
         //Forward
@@ -298,55 +298,42 @@ int main(void)
         glUniform1f(zLoc, z_mod);
         */
 
-        //translation
-        glm::mat4 transformation_matrix = glm::translate(identity_matrix, glm::vec3(x_mod, y_mod, z_mod));
 
-        //scale
-        transformation_matrix = glm::scale(transformation_matrix, glm::vec3(scaleVal, scaleVal, scaleVal));
+        float time = glfwGetTime(); 
 
-        //rotation
-        transformation_matrix = glm::rotate(transformation_matrix, glm::radians(thetaX), glm::vec3(1, 0, 0)); 
-        transformation_matrix = glm::rotate(transformation_matrix, glm::radians(thetaY), glm::vec3(0, 1, 0)); 
-        transformation_matrix = glm::rotate(transformation_matrix, glm::radians(thetaZ), glm::vec3(0, 0, 1)); 
+        glm::mat4 bunnyTransforms[3];
+        for (int i = 0; i < 3; i++) {
+            float angle = glm::radians(time * 50.0f + i * 120.0f);
 
-        unsigned int viewLoc = glGetUniformLocation(shaderProg, "view");
-        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(viewMatrix));
+            float x = 2.0f * cos(angle);
+            float y = 2.0f * sin(angle);
+            bunnyTransforms[i] = glm::translate(glm::mat4(1.0f), glm::vec3(x, y, 0.0f));
 
-        unsigned int projLoc = glGetUniformLocation(shaderProg, "projection");
-        glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
+            bunnyTransforms[i] = glm::rotate(bunnyTransforms[i], angle, glm::vec3(0, 0, 1));
 
-        unsigned int transformLoc = glGetUniformLocation(shaderProg, "transform");
+            bunnyTransforms[i] = glm::scale(bunnyTransforms[i], glm::vec3(scaleVal));
 
-        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transformation_matrix));
+            unsigned int viewLoc = glGetUniformLocation(shaderProg, "view");
+            glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(viewMatrix));
+
+            unsigned int projLoc = glGetUniformLocation(shaderProg, "projection");
+            glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
+
+            unsigned int transformLoc = glGetUniformLocation(shaderProg, "transform");
 
 
+            glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(bunnyTransforms[i]));
 
-        glUseProgram(shaderProg);
-        glBindVertexArray(VAO);
+            glUseProgram(shaderProg);
+            glBindVertexArray(VAO);
 
-        glDrawElements(GL_TRIANGLES, mesh_indices.size(), GL_UNSIGNED_INT, 0);
-
-        /*for (int i = 0; i < 8; i++) {
-
-            float angle = 0;
-
-            if (i == 0) {
-                angle = (pi / 8.0);
-            }
-            else {
-                angle = prevAngle + (pi / 4.0);
-            }
-            prevAngle = angle;
-            glVertex2f(radius * cos(angle), radius * sin(angle) + yOffset);
+            glDrawElements(GL_TRIANGLES, mesh_indices.size(), GL_UNSIGNED_INT, 0);
         }
-        glEnd();*/
 
 
         glfwSwapBuffers(window);
-
         glfwPollEvents();
     }
 
-    glfwTerminate();
-    return 0;
+
 }
